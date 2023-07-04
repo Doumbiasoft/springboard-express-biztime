@@ -19,21 +19,21 @@ router.get('/:code', async (req, res, next)=>{
         if (!code){
            throw new ExpressError('Bad request!',400); 
         }
-        const resultCompany = await db.query(`SELECT code,name,description FROM companies WHERE code =$1`,[code]);
-        const resultInvoices = await db.query(`SELECT id, amt, paid, add_date, paid_date, comp_code FROM invoices WHERE comp_code =$1`,[code]);
+        const resultCompany =  db.query(`SELECT code,name,description FROM companies WHERE code =$1`,[code]);
+        const resultInvoices =  db.query(`SELECT id, amt, paid, add_date, paid_date, comp_code FROM invoices WHERE comp_code =$1`,[code]);
+        let promises = await Promise.all([resultCompany,resultInvoices]);
+        
+         if(!promises[0].rows[0]){
+             throw new ExpressError('Company not found!',404); 
+         }
 
-        if(!resultCompany.rows[0]){
-            throw new ExpressError('Company no found!',404); 
-        }
-        const data = resultCompany.rows[0];
-        
         const company = {
-                code: data.comp_code,
-                name: data.name,
-                description: data.description,
-                invoices : resultInvoices.rows
-            };
-        
+            code:  promises[0].rows[0].comp_code,
+            name: promises[0].rows[0].name,
+            description: promises[0].rows[0].description,
+            invoices : promises[1].rows
+        };
+       
         return res.status(200).send({ company: company });
     } catch (error) {
         return next(error);
@@ -68,7 +68,7 @@ router.put('/:code', async (req, res, next)=>{
         }
         const result = await db.query(`UPDATE companies SET name=$1,description=$2 FROM companies WHERE code =$3 RETURNING code, name, description`,[name, description, code]);
         if(!result.rows[0]){
-            throw new ExpressError('Company no found!',404); 
+            throw new ExpressError('Company not found!',404); 
         }
         return res.status(200).send({ company: result.rows[0] });
     } catch (error) {
