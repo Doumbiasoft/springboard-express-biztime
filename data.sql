@@ -1,7 +1,10 @@
 \c biztime
 
-DROP TABLE IF EXISTS invoices;
-DROP TABLE IF EXISTS companies;
+DROP TABLE IF EXISTS invoices CASCADE;
+DROP TABLE IF EXISTS companies CASCADE;
+DROP TABLE IF EXISTS industries CASCADE;
+DROP TABLE IF EXISTS companies_industries CASCADE;
+
 
 CREATE TABLE companies (
     code text PRIMARY KEY,
@@ -18,6 +21,17 @@ CREATE TABLE invoices (
     paid_date date,
     CONSTRAINT invoices_amt_check CHECK ((amt > (0)::double precision))
 );
+CREATE TABLE industries (
+    code text PRIMARY KEY,
+    industry text NOT NULL UNIQUE
+);
+
+CREATE TABLE companies_industries (
+    comp_code text NOT NULL REFERENCES companies ON DELETE CASCADE,
+    indus_code text NOT NULL REFERENCES industries ON DELETE CASCADE,
+    PRIMARY KEY(comp_code, indus_code)
+);
+
 
 INSERT INTO companies
   VALUES ('apple', 'Apple Computer', 'Maker of OSX.'),
@@ -28,3 +42,28 @@ INSERT INTO invoices (comp_Code, amt, paid, paid_date)
          ('apple', 200, false, null),
          ('apple', 300, true, '2018-01-01'),
          ('ibm', 400, false, null);
+
+
+INSERT INTO industries
+  VALUES ('acct', 'Accounting'),
+         ('agric', 'Agriculture'),
+         ('manuf', 'Manufacturing'),
+         ('tech', 'Information technology'),
+         ('comm', 'Telecommunications'),
+         ('heal', 'Health care');
+         
+
+INSERT INTO companies_industries
+  VALUES ('apple', 'tech'),
+         ('apple', 'manuf'),
+         ('apple', 'heal'),
+         ('ibm', 'comm'),
+         ('ibm', 'agric'),
+         ('ibm', 'tech');
+
+
+
+
+
+
+

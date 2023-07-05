@@ -67,11 +67,17 @@ router.put('/:id', async (req, res, next)=>{
         if (!id){
            throw new ExpressError('Bad request!',400); 
         }
-        const { amt }= req.body;
-        if (!amt){
+        const { amt, paid }= req.body;
+        if (!amt || paid === undefined) {
             throw new ExpressError('Bad request!',400); 
         }
-        const result = await db.query(`UPDATE invoices SET amt=$1 FROM companies WHERE id =$2 RETURNING id, comp_code, amt, paid, add_date, paid_date`,[amt, id]);
+        const paid_date = new Date();
+        let result;
+        if ( paid === false ){
+            result = await db.query(`UPDATE invoices SET amt=$1 FROM companies WHERE id =$2 RETURNING id, comp_code, amt, paid, add_date, paid_date`,[amt, id]);
+        }else if ( paid === true ){
+            result = await db.query(`UPDATE invoices SET amt=$1, paid_date=$2, paid=$3 FROM companies WHERE id =$4 RETURNING id, comp_code, amt, paid, add_date, paid_date`,[amt, paid_date, paid, id]);
+        }
         if(!result.rows[0]){
             throw new ExpressError('Company no found!',404); 
         }
